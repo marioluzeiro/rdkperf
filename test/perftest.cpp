@@ -118,6 +118,10 @@ int main(int argc, char *argv[])
 {    
     LOG(eWarning, "Enter test app %s\n", __DATE__);
 
+#ifdef ENABLE_SHOW_CPU
+    LOG(eWarning, "ENABLE_SHOW_CPU is defined %d\n", ENABLE_SHOW_CPU);
+#endif
+
     pid_t child_pid;
 
 #ifdef PERF_REMOTE

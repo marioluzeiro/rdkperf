@@ -20,6 +20,7 @@ include ../Makefile.Features
 
 CXXFLAGS += -Wno-attributes -Wall -g -fpermissive -std=c++1y -fPIC
 CXXFLAGS += $(FEATURE_FLAGS)
+CXXFLAGS += -DENABLE_SHOW_CPU=1
 
 CFLAGS = -std=c99 $(CXXFLAGS)
 
