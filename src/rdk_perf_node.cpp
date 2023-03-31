@@ -215,12 +215,14 @@ void PerfNode::ReportData(uint32_t nLevel, bool bShowOnlyDelta, uint32_t msInter
         const float userCPU = (msIntervalTime == 0)?0.0f:m_stats.nIntervalUserCPU / (msIntervalTime * 10.0f);
         const float systemCPU = (msIntervalTime == 0)?0.0f:m_stats.nIntervalSystemCPU/ (msIntervalTime * 10.0f);
 
-        snprintf(ptr, MAX_BUF_SIZE - strlen(buffer), "| %s (Count, Max ms, Min ms, Avg ms) Total %llu, %0.3lf, %0.3lf, %0.3lf Interval %llu, %0.3lf, %0.3lf, %0.3lf CPU User %u ms(%0.1f%%), System %u ms (%0.1f%%)",
+        snprintf(ptr, MAX_BUF_SIZE - strlen(buffer), "| %s (Count, Max ms, Min ms, Avg ms) Total %llu, %0.3lf, %0.3lf, %0.3lf Interval %llu, %0.3lf, %0.3lf, %0.3lf CPU User %u ms(%0.1f%%), System %u ms (%0.1f%%), CPU Total: %u ms, WallTime: %u ms",
                 m_stats.elementName.c_str(),
                 m_stats.nTotalCount, ((double)m_stats.nTotalMax) / 1000.0, ((double)m_stats.nTotalMin) / 1000.0, m_stats.nTotalAvg / 1000.0,
                 m_stats.nIntervalCount, ((double)m_stats.nIntervalMax) / 1000.0, ((double)m_stats.nIntervalMin) / 1000.0, m_stats.nIntervalAvg / 1000.0,
                 (uint32_t)(m_stats.nIntervalUserCPU / 1000), userCPU,
-                (uint32_t)(m_stats.nIntervalSystemCPU / 1000), systemCPU);
+                (uint32_t)(m_stats.nIntervalSystemCPU / 1000), systemCPU,
+                (uint32_t)((m_stats.nIntervalUserCPU + m_stats.nIntervalSystemCPU ) / 1000),
+                (uint32_t)(m_stats.nIntervalTime / 1000));
 #else
         snprintf(ptr, MAX_BUF_SIZE - strlen(buffer), "| %s (Count, Max, Min, Avg) Total %llu, %0.3lf, %0.3lf, %0.3lf Interval %llu, %0.3lf, %0.3lf, %0.3lf",
                 m_stats.elementName.c_str(),
