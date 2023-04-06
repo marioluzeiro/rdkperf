@@ -254,6 +254,9 @@ RDKPerfEmpty::RDKPerfEmpty(const char* szName, uint32_t nThresholdInUS)
 void RDKPerfEmpty::SetThreshhold(uint32_t nThresholdInUS)
 {
 }
+void RDKPerfEmpty::IncrementCustomValue(uint64_t valueToAdd)
+{
+}
 RDKPerfEmpty::~RDKPerfEmpty()
 {
     return;
@@ -275,6 +278,11 @@ RDKPerfInProc::RDKPerfInProc(const char* szName, uint32_t nThresholdInUS)
 void RDKPerfInProc::SetThreshhold(uint32_t nThresholdInUS)
 {
     m_record.SetThreshold((int32_t)nThresholdInUS); 
+}
+
+void RDKPerfInProc::IncrementCustomValue(uint64_t valueToAdd)
+{
+    m_record.IncrementCustomValue(valueToAdd);
 }
 
 RDKPerfInProc::~RDKPerfInProc()
@@ -330,6 +338,10 @@ void RDKPerfRemote::SetThreshhold(uint32_t nThresholdInUS)
         s_pQueue->SendMessage(eThreshold, m_szName, 0, m_nThresholdInUS);
     }
 #endif // PERF_REMOTE    
+}
+
+void RDKPerfRemote::IncrementCustomValue(uint64_t valueToAdd)
+{
 }
 
 RDKPerfRemote::~RDKPerfRemote()

@@ -22,6 +22,7 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "rdk_perf_node.h"
 #include "rdk_perf_record.h"
@@ -30,7 +31,8 @@
 #include "rdk_perf_logging.h"
 
 PerfNode::PerfNode()
-: m_elementName("root_node"), m_Tree(NULL), m_ThresholdInUS(-1)
+: m_elementName("root_node"), m_Tree(NULL), m_ThresholdInUS(-1),
+m_customIncrementalValue(0)
 {
     m_startTime     = TimeStamp();
     m_idThread      = pthread_self();
@@ -48,7 +50,8 @@ PerfNode::PerfNode()
 }
 
 PerfNode::PerfNode(PerfRecord* pRecord)
-: m_Tree(NULL), m_ThresholdInUS(-1)
+: m_Tree(NULL), m_ThresholdInUS(-1),
+m_customIncrementalValue(0)
 {
     m_idThread      = pRecord->GetThreadID();
     m_elementName   = pRecord->GetName();
@@ -65,7 +68,8 @@ PerfNode::PerfNode(PerfRecord* pRecord)
 }
 
 PerfNode::PerfNode(char* szName, pthread_t tID, uint64_t nStartTime)
-: m_Tree(NULL), m_ThresholdInUS(-1)
+: m_Tree(NULL), m_ThresholdInUS(-1),
+m_customIncrementalValue(0)
 {
     m_idThread      = tID;
     m_elementName   = std::string(szName);
@@ -138,6 +142,13 @@ void PerfNode::CloseNode()
     }
 }
 
+void PerfNode::IncrementCustomValue(uint64_t valueToAdd)
+{
+    if( m_customIncrementalValue < ULONG_MAX ) {
+        m_customIncrementalValue += valueToAdd;
+    }
+}
+
 void PerfNode::IncrementData(uint64_t deltaTime, uint64_t userCPU, uint64_t systemCPU)
 {
     // Increment totals
@@ -183,6 +194,8 @@ void PerfNode::ResetInterval()
     m_stats.nIntervalUserCPU    = 0;
     m_stats.nIntervalSystemCPU  = 0;
 
+    m_customIncrementalValue    = 0;
+
     return;
 }
 
@@ -215,14 +228,15 @@ void PerfNode::ReportData(uint32_t nLevel, bool bShowOnlyDelta, uint32_t msInter
         const float userCPU = (msIntervalTime == 0)?0.0f:m_stats.nIntervalUserCPU / (msIntervalTime * 10.0f);
         const float systemCPU = (msIntervalTime == 0)?0.0f:m_stats.nIntervalSystemCPU/ (msIntervalTime * 10.0f);
 
-        snprintf(ptr, MAX_BUF_SIZE - strlen(buffer), "| %s (Count, Max ms, Min ms, Avg ms) Total %llu, %0.3lf, %0.3lf, %0.3lf Interval %llu, %0.3lf, %0.3lf, %0.3lf CPU User %u ms(%0.1f%%), System %u ms (%0.1f%%), CPU Total: %u ms, WallTime: %u ms",
+        snprintf(ptr, MAX_BUF_SIZE - strlen(buffer), "| %s (Count, Max ms, Min ms, Avg ms) Total %llu, %0.3lf, %0.3lf, %0.3lf Interval %llu, %0.3lf, %0.3lf, %0.3lf CPU User %u ms(%0.1f%%), System %u ms (%0.1f%%), CPU Total: %u ms, WallTime: %u ms, UserCounter: %llu",
                 m_stats.elementName.c_str(),
                 m_stats.nTotalCount, ((double)m_stats.nTotalMax) / 1000.0, ((double)m_stats.nTotalMin) / 1000.0, m_stats.nTotalAvg / 1000.0,
                 m_stats.nIntervalCount, ((double)m_stats.nIntervalMax) / 1000.0, ((double)m_stats.nIntervalMin) / 1000.0, m_stats.nIntervalAvg / 1000.0,
                 (uint32_t)(m_stats.nIntervalUserCPU / 1000), userCPU,
                 (uint32_t)(m_stats.nIntervalSystemCPU / 1000), systemCPU,
                 (uint32_t)((m_stats.nIntervalUserCPU + m_stats.nIntervalSystemCPU ) / 1000),
-                (uint32_t)(m_stats.nIntervalTime / 1000));
+                (uint32_t)(m_stats.nIntervalTime / 1000),
+                m_customIncrementalValue);
 #else
         snprintf(ptr, MAX_BUF_SIZE - strlen(buffer), "| %s (Count, Max, Min, Avg) Total %llu, %0.3lf, %0.3lf, %0.3lf Interval %llu, %0.3lf, %0.3lf, %0.3lf",
                 m_stats.elementName.c_str(),

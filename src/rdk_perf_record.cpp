@@ -77,6 +77,11 @@ PerfRecord::PerfRecord(std::string elementName)
     return;
 }
 
+void PerfRecord::IncrementCustomValue(uint64_t valueToAdd)
+{
+    m_nodeInTree->IncrementCustomValue(valueToAdd);
+}
+
 PerfRecord::~PerfRecord()
 {
     SCOPED_LOCK();

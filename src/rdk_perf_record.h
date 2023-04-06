@@ -53,6 +53,7 @@ public:
     uint64_t        GetStartTime()                  { return m_startTime; };
     void            SetThreshold(int32_t nUS)       { m_ThresholdInUS = (int32_t)nUS; };
     void            SetNodeInTree(PerfNode* pNode)  { m_nodeInTree = pNode; };
+    void            IncrementCustomValue(uint64_t valueToAdd);
  
     void            ReportData(uint32_t nLevel, bool bShowOnlyDelta, uint32_t msIntervalTime = 0);
 

@@ -65,6 +65,7 @@ public:
     ~RDKPerfEmpty();
 
     void SetThreshhold(uint32_t nThresholdInUS);
+    void IncrementCustomValue(uint64_t valueToAdd);
 
 private:
 };
@@ -78,6 +79,7 @@ public:
     ~RDKPerfInProc();
 
     void SetThreshhold(uint32_t nThresholdInUS);
+    void IncrementCustomValue(uint64_t valueToAdd);
 
 private:
     PerfRecord        m_record;
@@ -91,6 +93,7 @@ public:
     ~RDKPerfRemote();
 
     void SetThreshhold(uint32_t nThresholdInUS);
+    void IncrementCustomValue(uint64_t valueToAdd);
 
 private:
     const char* m_szName;

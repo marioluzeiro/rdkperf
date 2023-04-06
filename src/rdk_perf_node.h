@@ -78,6 +78,7 @@ public:
 
     void CloseNode();
     void IncrementData(uint64_t deltaTime, uint64_t userCPU, uint64_t systemCPU);
+    void IncrementCustomValue(uint64_t valueToAdd);
     void ResetInterval();
 
     void ReportData(uint32_t nLevel, bool bShowOnlyDelta, uint32_t msIntervalTime);
@@ -87,6 +88,7 @@ private:
     std::string             m_elementName;
     TimingStats             m_stats;
     uint64_t                m_startTime;
+    uint64_t                m_customIncrementalValue;
     PerfTree*               m_Tree;
     int32_t                 m_ThresholdInUS;
     std::map<std::string, PerfNode*>    m_childNodes;
