@@ -52,6 +52,8 @@ public:
  
     void SetWallClock();
     void SetCPU();
+    void SetRUsageSelf();
+    void SetRUsageThread();
 
     uint64_t GetWallClock(TimeUnit units = microsecond);
     uint64_t GetUserCPU(TimeUnit units = microsecond);
@@ -66,7 +68,7 @@ public:
 
 private:
     uint64_t ConvertToUS(time_t sec, time_t usec);
-
+    int         m_rusage;
     TimeStamp   m_timeStamp;
 };
 

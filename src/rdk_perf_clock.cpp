@@ -57,6 +57,7 @@ PerfClock::PerfClock()
     m_timeStamp.wallClock = 0;
     m_timeStamp.userCPU = 0;
     m_timeStamp.systemCPU = 0;
+    m_rusage = RUSAGE_SELF;
 }
 
 PerfClock::PerfClock(TimeStamp* pTS)
@@ -64,6 +65,7 @@ PerfClock::PerfClock(TimeStamp* pTS)
     m_timeStamp.wallClock   = pTS->wallClock;
     m_timeStamp.userCPU     = pTS->userCPU;
     m_timeStamp.systemCPU   = pTS->systemCPU;
+    m_rusage = RUSAGE_SELF;
 }
 
 PerfClock::~PerfClock()
@@ -83,17 +85,26 @@ void PerfClock::SetWallClock()
     return;
 }
 
+void PerfClock::SetRUsageSelf()
+{
+    m_rusage = RUSAGE_SELF;
+}
+
+void PerfClock::SetRUsageThread()
+{
+    m_rusage = RUSAGE_THREAD;
+}
+
 void PerfClock::SetCPU()
 {
     struct rusage data;
-    int who = RUSAGE_SELF; 
-    //int who = RUSAGE_THREAD; 
-    if(getrusage(who, &data) == -1) {
-         LOG(eError, "getrusage failure %d: %s\n", errno, strerror(errno));
+
+    if(getrusage(m_rusage, &data) == -1) {
+         LOG(eError, "getrusage %d, failure %d: %s\n", m_rusage, errno, strerror(errno));
     }
 
     if(data.ru_stime.tv_sec == 0 && data.ru_stime.tv_usec == 0) {
-        LOG(eError, "getrusage failed values = 0\n");   
+        LOG(eError, "getrusage %d, failed values = 0\n", m_rusage);   
         m_timeStamp.systemCPU = 0;
         m_timeStamp.userCPU = 0;       
     }
