@@ -100,11 +100,11 @@ void PerfClock::SetCPU()
     struct rusage data;
 
     if(getrusage(m_rusage, &data) == -1) {
-         LOG(eError, "getrusage %d, failure %d: %s\n", m_rusage, errno, strerror(errno));
+         LOG(eError, "getrusage %s, failure %d: %s\n", (m_rusage == RUSAGE_SELF)?"RUSAGE_SELF":"RUSAGE_THREAD", errno, strerror(errno));
     }
 
     if(data.ru_stime.tv_sec == 0 && data.ru_stime.tv_usec == 0) {
-        LOG(eError, "getrusage %d, failed values = 0\n", m_rusage);   
+        LOG(eError, "getrusage %s, failed values = 0\n", (m_rusage == RUSAGE_SELF)?"RUSAGE_SELF":"RUSAGE_THREAD");   
         m_timeStamp.systemCPU = 0;
         m_timeStamp.userCPU = 0;       
     }

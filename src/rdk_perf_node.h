@@ -54,6 +54,9 @@ typedef struct _TimingStats
     uint64_t            nIntervalSystemCPU;
     uint64_t            nTotalUserCPU;
     uint64_t            nTotalSystemCPU;
+    uint64_t            ncustomIncrementalValue;
+    uint64_t            ncustomIncrementalValueMin;
+    uint64_t            ncustomIncrementalValueMax;
 } TimingStats;
 
 // Forward decls
@@ -84,11 +87,13 @@ public:
     void ReportData(uint32_t nLevel, bool bShowOnlyDelta, uint32_t msIntervalTime);
 
 private:
+    void resetIncrementCustomValue( void );
+
     pthread_t               m_idThread;
     std::string             m_elementName;
     TimingStats             m_stats;
     uint64_t                m_startTime;
-    uint64_t                m_customIncrementalValue;
+    bool                    m_customIncrementalValueWasCalled;
     PerfTree*               m_Tree;
     int32_t                 m_ThresholdInUS;
     std::map<std::string, PerfNode*>    m_childNodes;

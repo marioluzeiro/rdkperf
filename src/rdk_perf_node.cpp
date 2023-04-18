@@ -31,8 +31,7 @@
 #include "rdk_perf_logging.h"
 
 PerfNode::PerfNode()
-: m_elementName("root_node"), m_Tree(NULL), m_ThresholdInUS(-1),
-m_customIncrementalValue(0)
+: m_elementName("root_node"), m_Tree(NULL), m_ThresholdInUS(-1)
 {
     m_startTime     = TimeStamp();
     m_idThread      = pthread_self();
@@ -44,14 +43,15 @@ m_customIncrementalValue(0)
     m_stats.nTotalCount    = 1;
     m_stats.nIntervalCount = 1;
 
+    resetIncrementCustomValue();
+
     // LOG(eWarning, "Creating node for element %s\n", m_elementName.c_str());
 
     return;
 }
 
 PerfNode::PerfNode(PerfRecord* pRecord)
-: m_Tree(NULL), m_ThresholdInUS(-1),
-m_customIncrementalValue(0)
+: m_Tree(NULL), m_ThresholdInUS(-1)
 {
     m_idThread      = pRecord->GetThreadID();
     m_elementName   = pRecord->GetName();
@@ -64,12 +64,13 @@ m_customIncrementalValue(0)
     m_stats.nIntervalMin  = INITIAL_MIN_VALUE;
     m_stats.elementName   = m_elementName;
 
+    resetIncrementCustomValue();
+
     return;
 }
 
 PerfNode::PerfNode(char* szName, pthread_t tID, uint64_t nStartTime)
-: m_Tree(NULL), m_ThresholdInUS(-1),
-m_customIncrementalValue(0)
+: m_Tree(NULL), m_ThresholdInUS(-1)
 {
     m_idThread      = tID;
     m_elementName   = std::string(szName);
@@ -82,7 +83,17 @@ m_customIncrementalValue(0)
     m_stats.nIntervalMin  = INITIAL_MIN_VALUE;
     m_stats.elementName   = m_elementName;
 
+    resetIncrementCustomValue();
+
     return;
+}
+
+void PerfNode::resetIncrementCustomValue( void )
+{
+    m_stats.ncustomIncrementalValue = 0;
+    m_stats.ncustomIncrementalValueMin = ULLONG_MAX;
+    m_stats.ncustomIncrementalValueMax = 0;
+    m_customIncrementalValueWasCalled = false;
 }
 
 PerfNode::~PerfNode()
@@ -144,8 +155,18 @@ void PerfNode::CloseNode()
 
 void PerfNode::IncrementCustomValue(uint64_t valueToAdd)
 {
-    if( m_customIncrementalValue < ULONG_MAX ) {
-        m_customIncrementalValue += valueToAdd;
+    m_customIncrementalValueWasCalled = true;
+
+    if( m_stats.ncustomIncrementalValue < ULLONG_MAX ) {
+        m_stats.ncustomIncrementalValue += valueToAdd;
+    }
+
+    if( valueToAdd < m_stats.ncustomIncrementalValueMin ) {
+        m_stats.ncustomIncrementalValueMin = valueToAdd;
+    }
+
+    if( valueToAdd > m_stats.ncustomIncrementalValueMax ) {
+        m_stats.ncustomIncrementalValueMax = valueToAdd;
     }
 }
 
@@ -194,7 +215,7 @@ void PerfNode::ResetInterval()
     m_stats.nIntervalUserCPU    = 0;
     m_stats.nIntervalSystemCPU  = 0;
 
-    m_customIncrementalValue    = 0;
+    resetIncrementCustomValue();
 
     return;
 }
@@ -228,15 +249,22 @@ void PerfNode::ReportData(uint32_t nLevel, bool bShowOnlyDelta, uint32_t msInter
         const float userCPU = (msIntervalTime == 0)?0.0f:m_stats.nIntervalUserCPU / (msIntervalTime * 10.0f);
         const float systemCPU = (msIntervalTime == 0)?0.0f:m_stats.nIntervalSystemCPU/ (msIntervalTime * 10.0f);
 
-        snprintf(ptr, MAX_BUF_SIZE - strlen(buffer), "| %s (Count, Max ms, Min ms, Avg ms) Total %llu, %0.3lf, %0.3lf, %0.3lf Interval %llu, %0.3lf, %0.3lf, %0.3lf CPU User %u ms(%0.1f%%), System %u ms (%0.1f%%), CPU Total: %u ms, WallTime: %u ms, UserCounter: %llu",
+        snprintf(ptr, MAX_BUF_SIZE - strlen(buffer), "| %s (Count, Max ms, Min ms, Avg ms) Total %llu, %0.3lf, %0.3lf, %0.3lf Interval %llu, %0.3lf, %0.3lf, %0.3lf CPU User %u ms(%0.1f%%), System %u ms (%0.1f%%), CPU Total: %u ms, WallTime: %u ms",
                 m_stats.elementName.c_str(),
                 m_stats.nTotalCount, ((double)m_stats.nTotalMax) / 1000.0, ((double)m_stats.nTotalMin) / 1000.0, m_stats.nTotalAvg / 1000.0,
                 m_stats.nIntervalCount, ((double)m_stats.nIntervalMax) / 1000.0, ((double)m_stats.nIntervalMin) / 1000.0, m_stats.nIntervalAvg / 1000.0,
                 (uint32_t)(m_stats.nIntervalUserCPU / 1000), userCPU,
                 (uint32_t)(m_stats.nIntervalSystemCPU / 1000), systemCPU,
                 (uint32_t)((m_stats.nIntervalUserCPU + m_stats.nIntervalSystemCPU ) / 1000),
-                (uint32_t)(m_stats.nIntervalTime / 1000),
-                m_customIncrementalValue);
+                (uint32_t)(m_stats.nIntervalTime / 1000));
+
+        if( m_customIncrementalValueWasCalled ) {
+            snprintf(ptr, MAX_BUF_SIZE - strlen(buffer), ", UserCounter (Total, Max, Min): %llu, %llu, %llu",
+                    m_stats.ncustomIncrementalValue,
+                    m_stats.ncustomIncrementalValueMax,
+                    m_stats.ncustomIncrementalValueMin );
+        }
+
 #else
         snprintf(ptr, MAX_BUF_SIZE - strlen(buffer), "| %s (Count, Max, Min, Avg) Total %llu, %0.3lf, %0.3lf, %0.3lf Interval %llu, %0.3lf, %0.3lf, %0.3lf",
                 m_stats.elementName.c_str(),
