@@ -63,7 +63,7 @@ public:
     TimerCallback (void* pContext) 
     : m_Context(pContext)
     , m_bContinue(false)
-    , m_nDelay(0)
+    , m_nDelay(6)
     , m_nCount(0)
     , m_current_state(WAITING)
     {
@@ -127,7 +127,7 @@ public:
                 RDKPerf_ReportProcess(getpid());
                 m_nCount = 0;
                 if(m_nDelay < MAX_DELAY) {
-                    m_nDelay+=5;
+                    //m_nDelay+=5;
                 }
                 LOG(eWarning, "Next performance log in %d seconds\n", m_nDelay * TIMER_INTERVAL_SECONDS);
             }
