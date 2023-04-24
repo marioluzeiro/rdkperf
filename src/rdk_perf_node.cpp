@@ -261,7 +261,7 @@ void PerfNode::ReportData(uint32_t nLevel, bool bShowOnlyDelta, uint32_t msInter
         if( m_customIncrementalValueWasCalled ) {
             const size_t currentBufferSize = strlen(buffer);
             if( currentBufferSize < MAX_BUF_SIZE ) {
-                    snprintf(ptr + currentBufferSize, MAX_BUF_SIZE - currentBufferSize, ", UserCounter (Total, Max, Min): %llu, %llu, %llu",
+                    snprintf(buffer + currentBufferSize, MAX_BUF_SIZE - currentBufferSize, ", UserCounter (Total, Max, Min): %llu, %llu, %llu",
                         m_stats.ncustomIncrementalValue,
                         m_stats.ncustomIncrementalValueMax,
                         m_stats.ncustomIncrementalValueMin );
