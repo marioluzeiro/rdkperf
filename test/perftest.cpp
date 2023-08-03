@@ -33,18 +33,21 @@
 void unit_tests();
 void unit_tests_c();
 
+uint32_t Func4()
+{
+    RDKPerf perf(__FUNCTION__);
+}
+
 uint32_t Func3(uint32_t nCount)
 {
     RDKPerf perf(__FUNCTION__);
 
-    nCount = 1000000000;
-    while(nCount >= 1) {
+    nCount = 10000;
+    while(nCount > 0) {
         nCount--;
-        if(nCount == 1) {
-            break;
-        }
+        Func4();
     }
-    //usleep(100);
+
     nCount++;
     return nCount;
 }
@@ -52,10 +55,9 @@ uint32_t Func3(uint32_t nCount)
 void Func2()
 {
     RDKPerf perf(__FUNCTION__);
-    for(int nIdx = 0; nIdx < 5; nIdx++) {
+    for(int nIdx = 0; nIdx < 1000; nIdx++) {
         Func3(nIdx);
     }
-    sleep(1);
 }
 
 void Func1()
@@ -72,8 +74,8 @@ void* task1(void* pData)
 {
     pthread_setname_np(pthread_self(), __FUNCTION__);
     RDKPerf perf(__FUNCTION__);
-    Func1();
-
+    Func2();
+/*
     sleep(4);
 
     RDKPerfHandle hPerf = RDKPerfStart("Func3_Wrapper");
@@ -81,7 +83,7 @@ void* task1(void* pData)
     while(nCount < MAX_LOOP) {
         nCount = Func3(nCount);   
     }
-    RDKPerfStop(hPerf);
+    RDKPerfStop(hPerf);*/
     return NULL;
 }
 
@@ -93,7 +95,7 @@ void* task2(void* pData)
     Func2();
 
     RDKPerfHandle hPerf = RDKPerfStart("test_c");
-    sleep(2);
+    sleep(1);
     RDKPerfStop(hPerf);
     
     return NULL;
@@ -139,7 +141,7 @@ int main(int argc, char *argv[])
     // sleep(1);
 #endif
     // Perform Unit tests
-    unit_tests();
+    //unit_tests();
     //unit_tests_c();
 
 #ifdef DO_THREAD_TESTS
@@ -149,10 +151,10 @@ int main(int argc, char *argv[])
     LOG(eWarning, "Creating Test threads\n");
 
     pthread_create(&threadId1, NULL, &task1, NULL);
-    pthread_create(&threadId2, NULL, &task2, NULL);
+    //pthread_create(&threadId2, NULL, &task2, NULL);
  
     pthread_join(threadId1, NULL);
-    pthread_join(threadId2, NULL);
+    //pthread_join(threadId2, NULL);
 #endif
 
 #ifdef DO_INLINE_TESTS

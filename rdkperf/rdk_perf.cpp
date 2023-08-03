@@ -41,7 +41,7 @@
 
 #define REPORTING_INITIAL_COUNT 5000
 #define REPORTING_INTERVAL_COUNT 20000
-#define TIMER_INTERVAL_SECONDS 10
+#define TIMER_INTERVAL_SECONDS 1
 #define MAX_DELAY 600
 
 
@@ -123,7 +123,8 @@ public:
         // Validate that threads in process are still active
         if(RDKPerf_FindProcess(getpid()) != NULL) {
             // Found a process in the list
-            if(m_nCount > m_nDelay) {
+            //if(m_nCount > m_nDelay) {
+            if(1){
                 RDKPerf_ReportProcess(getpid());
                 m_nCount = 0;
                 if(m_nDelay < MAX_DELAY) {
@@ -217,7 +218,7 @@ static void PerfModuleTerminate()
 
     LOG(eWarning, "RDK Performance process terminate %X\n", pID);
 
-#if 0 // No need to print report on process exit
+#if 1 // No need to print report on process exit
     // Print report
     RDKPerf_ReportProcess(pID);
 #endif    
