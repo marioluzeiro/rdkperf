@@ -127,7 +127,7 @@ public:
         if(RDKPerf_FindProcess(getpid()) != NULL) {
             // Found a process in the list
             //if(m_nCount > m_nDelay) {
-            if(1){
+            if(1) {
                 RDKPerf_ReportProcess(getpid());
                 m_nCount = 0;
                 if(m_nDelay < MAX_DELAY) {

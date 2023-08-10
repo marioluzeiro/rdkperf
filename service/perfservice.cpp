@@ -327,6 +327,7 @@ int main(int argc, char *argv[])
     // // Does the queue exist
     if(PerfMsgQueue::IsQueueCreated(RDK_PERF_MSG_QUEUE_NAME)) {
         LOG(eError, "Queue exists, service is a duplicate\n");
+        mq_unlink(RDK_PERF_MSG_QUEUE_NAME);
         exit(-1);
     }
 

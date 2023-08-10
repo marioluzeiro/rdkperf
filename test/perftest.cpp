@@ -33,29 +33,26 @@
 void unit_tests();
 void unit_tests_c();
 
-uint32_t Func4()
+void Func4()
 {
     RDKPerf perf(__FUNCTION__);
 }
 
-uint32_t Func3(uint32_t nCount)
+void Func3(uint32_t nCount)
 {
     RDKPerf perf(__FUNCTION__);
 
-    nCount = 10000;
+    nCount = 1000000;
     while(nCount > 0) {
         nCount--;
         Func4();
     }
-
-    nCount++;
-    return nCount;
 }
 
 void Func2()
 {
     RDKPerf perf(__FUNCTION__);
-    for(int nIdx = 0; nIdx < 1000; nIdx++) {
+    for(int nIdx = 0; nIdx < 1; nIdx++) {
         Func3(nIdx);
     }
 }
