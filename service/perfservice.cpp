@@ -57,9 +57,10 @@ PerfTree* GetTree(pid_t pID, pthread_t tID, char* szName, bool bCreate = false)
     if(pTree == NULL) {
         if(bCreate) {
             pTree = pProcess->NewTree(tID);
+            LOG(eError, "Tree created %X\n", tID);
         }
         else {
-            LOG(eError, "Tree not found %x but create not enabled\n", tID);
+            LOG(eError, "Tree not found %X but create not enabled\n", tID);
         }
     }
 
@@ -84,7 +85,12 @@ bool HandleEntry(PerfMessage* pMsg)
         PerfNode* pNode = pTree->AddNode(szName,
                                          tID,
                                          szThreadName,
-                                         pMsg->msg_data.entry.nTimeStamp);
+#ifdef PERF_SHOW_CPU
+                                         0
+#else
+                                         pMsg->msg_data.entry.nTimeStamp
+#endif
+                                         );
         if(pMsg->msg_data.entry.nThresholdInUS > 0) {
             pNode->SetThreshold(pMsg->msg_data.entry.nThresholdInUS);
         }
@@ -136,7 +142,14 @@ bool HandleExit(PerfMessage* pMsg)
         PerfNode* pNode = pTree->GetStack()->top();
         if(pNode != NULL && 
             pNode->GetName().compare(szName) == 0) {
+#ifdef PERF_SHOW_CPU
+            PerfClock deltaClock(&pMsg->msg_data.exit.clkTimeStamp);
+            pNode->IncrementData(deltaClock.GetWallClock(),
+                                 deltaClock.GetUserCPU(),
+                                 deltaClock.GetSystemCPU());
+#else
             pNode->IncrementData(pMsg->msg_data.exit.nTimeStamp, 0, 0);
+#endif
             pNode->CloseNode();
             retVal = true;
         }
