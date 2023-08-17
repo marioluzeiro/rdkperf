@@ -42,6 +42,11 @@ PerfMsgQueue::PerfMsgQueue(const char* szQueueName, bool bService)
 , m_stats_msgSent(0)
 , m_stats_msgEntry(0)
 , m_stats_msgExit(0)
+#if defined(MEASURE_MQ_SEND_USAGE) && defined(PERF_SHOW_CPU)
+, m_cpu_wall_us(0)
+, m_cpu_user_us(0)
+, m_cpu_system_us(0)
+#endif
 {
     int             flags = 0;
     mode_t          mode = S_IRWXU | S_IRWXG | S_IRWXO;
@@ -99,6 +104,12 @@ PerfMsgQueue::~PerfMsgQueue()
     LOG(eWarning, "\tSent: %lu\n", m_stats_msgSent);
     LOG(eWarning, "\tEntry: %lu\n", m_stats_msgEntry);
     LOG(eWarning, "\tExit: %lu\n", m_stats_msgExit);
+#if defined(MEASURE_MQ_SEND_USAGE) && defined(PERF_SHOW_CPU)
+    LOG(eWarning, "mq_send CPU usage Total microseconds (microseconds/message):\n");
+    LOG(eWarning, "\tWall: %lu (%lf)\n", m_cpu_wall_us, ((double)m_cpu_wall_us/(double)m_stats_msgSent));
+    LOG(eWarning, "\tUser: %lu (%lf)\n", m_cpu_user_us, ((double)m_cpu_user_us/(double)m_stats_msgSent));
+    LOG(eWarning, "\tSystem: %lu (%lf)\n", m_cpu_system_us, ((double)m_cpu_system_us/(double)m_stats_msgSent));
+#endif
 }
 
 #ifdef PERF_SHOW_CPU
@@ -128,13 +139,15 @@ bool PerfMsgQueue::SendMessage(MessageType type, const char* szName, uint64_t nT
 #endif
         msg.msg_data.entry.nThresholdInUS = nThresholdInUS;
         pthread_getname_np(msg.msg_data.entry.tID, msg.msg_data.entry.szThreadName, MAX_NAME_LEN);
-        memcpy((void*)msg.msg_data.entry.szName, (void*)szName, MIN((size_t)(MAX_NAME_LEN - 1), strlen(szName)));
+        strncpy(msg.msg_data.entry.szName, szName, MAX_NAME_LEN);
+        msg.msg_data.entry.szName[MAX_NAME_LEN - 1] = 0;
         break;
     case eThreshold:
         msg.msg_data.entry.pID = getpid();
         msg.msg_data.entry.tID = pthread_self();
         msg.msg_data.entry.nThresholdInUS = nThresholdInUS;
-        memcpy((void*)msg.msg_data.entry.szName, (void*)szName, MIN((size_t)(MAX_NAME_LEN - 1), strlen(szName)));
+        strncpy(msg.msg_data.entry.szName, szName, MAX_NAME_LEN);
+        msg.msg_data.entry.szName[MAX_NAME_LEN - 1] = 0;
         break;
     case eExit:
         if(m_stats_msgExit < ULONG_MAX) {
@@ -152,7 +165,8 @@ bool PerfMsgQueue::SendMessage(MessageType type, const char* szName, uint64_t nT
 #else
         msg.msg_data.exit.nTimeStamp = nTimeStamp;
 #endif
-        memcpy((void*)msg.msg_data.entry.szName, (void*)szName, MIN((size_t)(MAX_NAME_LEN - 1), strlen(szName)));
+        strncpy(msg.msg_data.exit.szName, szName, MAX_NAME_LEN);
+        msg.msg_data.exit.szName[MAX_NAME_LEN - 1] = 0;
         break;
     case eReportThread:
         msg.msg_data.report_thread.pID = getpid();
@@ -189,7 +203,21 @@ bool PerfMsgQueue::SendMessage(PerfMessage* pMsg)
     bool            retVal      = false;
     unsigned int    nPriority   = 5;
 
+#if defined(MEASURE_MQ_SEND_USAGE) && defined(PERF_SHOW_CPU)
+    PerfClock timer;
+    PerfClock::Now(&timer, PerfClock::Marker);
+#endif
+
     int result = mq_send(m_queue, (const char*)pMsg, sizeof(PerfMessage), nPriority);
+
+#if defined(MEASURE_MQ_SEND_USAGE) && defined(PERF_SHOW_CPU)
+    PerfClock::Now(&timer, PerfClock::Elapsed);
+
+    m_cpu_wall_us += timer.GetWallClock();
+    m_cpu_user_us += timer.GetUserCPU();
+    m_cpu_system_us += timer.GetSystemCPU();
+#endif
+
     if(result == 0) {
         // Success
         retVal = true;
