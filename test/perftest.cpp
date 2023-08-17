@@ -28,10 +28,13 @@
 
 #include "rdk_perf.h"
 #include "rdk_perf_logging.h"
+#include "rdk_perf_msgqueue.h"
 
 // Uint Tests prototype
 void unit_tests();
 void unit_tests_c();
+
+static int s_systemMaxMsg = 0;
 
 void Func4()
 {
@@ -42,18 +45,22 @@ void Func3(uint32_t nCount)
 {
     RDKPerf perf(__FUNCTION__);
 
-    nCount = 1000000;
+    nCount = ( s_systemMaxMsg / 2 ); // Because Entry+Exit
     while(nCount > 0) {
         nCount--;
         Func4();
     }
 }
 
+#define SLEEP_US_PER_MESSAGE 2
+
 void Func2()
 {
     RDKPerf perf(__FUNCTION__);
-    for(int nIdx = 0; nIdx < 1; nIdx++) {
+    int loopTimes = ( 1000000 / ( s_systemMaxMsg / 2 ) );
+    for(int nIdx = 0; nIdx < loopTimes; nIdx++) {
         Func3(nIdx);
+        usleep(s_systemMaxMsg * SLEEP_US_PER_MESSAGE);
     }
 }
 
@@ -113,11 +120,37 @@ void test_inline()
     return;
 }
 
+static int GetSystemMaxMsg(void)
+{
+    static const char* msgmax_filename = "/proc/sys/fs/mqueue/msg_max";
+
+    FILE* fp = fopen(msgmax_filename, "r");
+
+    if(fp == NULL) {
+        LOG(eError, "Can't open \"%s\"\n", msgmax_filename);
+        return 0;
+    }
+
+    int msg_max = 0;
+    char buffer[12];
+
+    if(fgets(buffer, 12, fp) != NULL) {
+        msg_max = atoi(buffer);
+    }else{
+        LOG(eError, "Can't parse content of \"%s\"\n", msgmax_filename);
+    }
+
+    return msg_max;
+}
+
+
 int main(int argc, char *argv[])
 {    
     LOG(eWarning, "Enter test app %s\n", __DATE__);
 
     pid_t child_pid;
+
+    s_systemMaxMsg = GetSystemMaxMsg();
 
 #ifdef PERF_REMOTE
     // child_pid = fork();
