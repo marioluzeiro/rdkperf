@@ -55,7 +55,6 @@ void MeasureRDKperf()
         uint64_t startTime_us = PerfRecord::TimeStamp();
 
         // /2 because Entry+Exit
-        // -2 because the Func3 Entry+Exit
         uint32_t nCount = ( s_systemMaxMsg / 2 );
 
         totalCalls += nCount;
@@ -83,7 +82,7 @@ void Func3(uint32_t nCount)
 
     // /2 because Entry+Exit
     // -2 because the Func3 Entry+Exit
-    nCount = ( s_systemMaxMsg / 2 );
+    nCount = ( s_systemMaxMsg / 2 ) - 2;
     while(nCount > 0) {
         nCount--;
         Func4();
