@@ -34,25 +34,61 @@
 void unit_tests();
 void unit_tests_c();
 
-static int s_systemMaxMsg = 0;
+static int32_t s_systemMaxMsg = 0;
 
 void Func4()
 {
     RDKPerf perf(__FUNCTION__);
 }
 
+#define SLEEP_US_PER_MESSAGE 2
+
+void MeasureRDKperf()
+{
+    uint64_t totalTime_us = 0;
+    uint64_t totalCalls = 0;
+
+    uint32_t loopTimes = ( 1000000 / ( s_systemMaxMsg / 2 ) );
+
+    for(uint32_t nIdx = 0; nIdx < loopTimes; nIdx++) {
+
+        uint64_t startTime_us = PerfRecord::TimeStamp();
+
+        // /2 because Entry+Exit
+        // -2 because the Func3 Entry+Exit
+        uint32_t nCount = ( s_systemMaxMsg / 2 );
+
+        totalCalls += nCount;
+
+        while(nCount > 0) {
+            nCount--;
+            Func4();
+        }
+
+        totalTime_us += ( PerfRecord::TimeStamp() - startTime_us );
+
+        // Sleep so the queue can be handled
+        usleep( s_systemMaxMsg * SLEEP_US_PER_MESSAGE );
+    }
+
+    LOG(eWarning, "MeasureRDKperf, QueueDepth: %u, TotalRDKperfCalls: %lu, us/call: %1.2lf\n",
+                    s_systemMaxMsg,
+                    totalCalls,
+                    (double)totalTime_us / (double)totalCalls );
+}
+
 void Func3(uint32_t nCount)
 {
     RDKPerf perf(__FUNCTION__);
 
-    nCount = ( s_systemMaxMsg / 2 ); // Because Entry+Exit
+    // /2 because Entry+Exit
+    // -2 because the Func3 Entry+Exit
+    nCount = ( s_systemMaxMsg / 2 );
     while(nCount > 0) {
         nCount--;
         Func4();
     }
 }
-
-#define SLEEP_US_PER_MESSAGE 2
 
 void Func2()
 {
@@ -173,6 +209,9 @@ int main(int argc, char *argv[])
     // Perform Unit tests
     //unit_tests();
     //unit_tests_c();
+
+    MeasureRDKperf();
+    return;
 
 #ifdef DO_THREAD_TESTS
     pthread_t threadId1;
